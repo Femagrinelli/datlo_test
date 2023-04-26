@@ -23,7 +23,7 @@ df = df.withColumnRenamed("_c0","cnpj") \
         .withColumnRenamed("_c4","cap_social_empresa") \
         .withColumnRenamed("_c5","porte_empresa_id") \
         .withColumnRenamed("_c6","ente_federativo_resp") \
-        .withColumn("new_gender", when(col("porte_empresa_id") == 0,"NÃO INFORMADO")
+        .withColumn("porte_empresa_desc", when(col("porte_empresa_id") == 0,"NÃO INFORMADO")
               .when(col("porte_empresa_id") == 1,"MICRO EMPRESA")
               .when(col("porte_empresa_id") == 3,"EMPRESA DE PEQUENO PORTE")
               .otherwise("DEMAIS"))
