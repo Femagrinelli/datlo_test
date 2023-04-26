@@ -1,0 +1,123 @@
+{
+  "StartAt": "Lambda Invoke",
+  "States": {
+    "Lambda Invoke": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "arn:aws:lambda:sa-east-1:019214396051:function:ExtractCompanyData:$LATEST"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "EMR CreateCluster"
+    },
+    "EMR CreateCluster": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:createCluster.sync",
+      "Parameters": {
+        "Name": "datlo-emr-companies",
+        "VisibleToAllUsers": true,
+        "ReleaseLabel": "emr-6.3.0",
+        "Applications": [
+          {
+            "Name": "Spark"
+          }
+        ],
+        "BootstrapActions": [
+          {
+            "Name": "Bootstrap",
+            "ScriptBootstrapAction": {
+              "Args": [],
+              "Path": "s3://datlo-companies/bootstrap/emr_bootstrap.sh"
+            }
+          }
+        ],
+        "ServiceRole": "arn:aws:iam::019214396051:role/service-role/AmazonEMR-ServiceRole-20230424T200442",
+        "JobFlowRole": "AmazonEMR-InstanceProfile-20230424T200425",
+        "LogUri": "s3://datlo-companies/logs/",
+        "Instances": {
+          "Ec2SubnetId": "subnet-01609ede4f05afe19",
+          "EmrManagedSlaveSecurityGroup": "sg-049cb41151d6ab1e7",
+          "EmrManagedMasterSecurityGroup": "sg-084c29057840e60ae",
+          "KeepJobFlowAliveWhenNoSteps": true,
+          "InstanceFleets": [
+            {
+              "Name": "master1",
+              "InstanceFleetType": "MASTER",
+              "TargetOnDemandCapacity": 1,
+              "InstanceTypeConfigs": [
+                {
+                  "InstanceType": "c3.xlarge"
+                }
+              ]
+            },
+            {
+              "Name": "CoreFleet",
+              "InstanceFleetType": "CORE",
+              "TargetOnDemandCapacity": 1,
+              "InstanceTypeConfigs": [
+                {
+                  "InstanceType": "c3.xlarge"
+                }
+              ]
+            }
+          ]
+        },
+        "Configurations": [
+          {
+            "Classification": "spark-defaults",
+            "Properties": {
+              "spark.executor.memory": "2G",
+              "spark.driver.memory": "2G"
+            }
+          }
+        ]
+      },
+      "Next": "EMR Datlo",
+      "ResultPath": "$.cluster"
+    },
+    "EMR Datlo": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:addStep.sync",
+      "Parameters": {
+        "ClusterId.$": "$.cluster.ClusterId",
+        "Step": {
+          "Name": "Task-Emr empresas",
+          "ActionOnFailure": "TERMINATE_CLUSTER",
+          "HadoopJarStep": {
+            "Jar": "command-runner.jar",
+            "Args": [
+              "spark-submit",
+              "--deploy-mode",
+              "cluster",
+              "s3://datlo-companies/scripts/emr-spark.py"
+            ]
+          }
+        }
+      },
+      "ResultPath": "$.primeiroStep",
+      "Next": "EMR TerminateCluster"
+    },
+    "EMR TerminateCluster": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::elasticmapreduce:terminateCluster",
+      "Parameters": {
+        "ClusterId.$": "$.cluster.ClusterId"
+      },
+      "End": true
+    }
+  }
+}
