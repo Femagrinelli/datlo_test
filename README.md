@@ -2,23 +2,23 @@
 
 Vídeo explicativo: https://youtu.be/u4wdHA8jMQQ
 
-Tempo de Execução total de 29 minutos
+Total execution time de 29 min
 
-| Tarefa               | Tempo                                                |
+| Task               | Time                                                |
 | ----------------- | ---------------------------------------------------------------- |
-| Execução Lambda       | 9 minutos |
-| Criação do Cluster EMR| 7 minutos |
-| Script EMR            | 13 minutos| 
-|Total|29 Minutos
+| Lambda Execution       | 9 min |
+| Creation Cluster EMR| 7 min |
+| Pyspark Script EMR    | 13 min| 
+|Total|29 min
 
 
-1. Execução do Lambda - 9 minutos nas quais
-  -  3 minutos para a inicialização da instância do EC2
-  -  6 minutos para o download, extração e disponibilização dos dados no Bucket S3
+1. Lambda Execution - 9 min in which:
+  -  3 minutes to initialize EC2 instance
+  -  6 minutes to download, extract and make the data available in a S3 Bucket
 
-2. Criação do Cluster EMR - 7 minutos
+2. Creation Cluster EMR - 7 minutos
 
 3. Script EMR - 13 minutos
-- Disponibilização em formato parquet e csv
+- Saving in csv and parquet formats
 
 
